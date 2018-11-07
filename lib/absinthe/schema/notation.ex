@@ -49,7 +49,9 @@ defmodule Absinthe.Schema.Notation do
   @doc """
   Configure a subscription field.
 
-  ## Example
+  The returned topic can be single topic, or a list of topics
+
+  ## Examples
 
   ```elixir
   config fn args, %{context: context} ->
@@ -58,6 +60,14 @@ defmodule Absinthe.Schema.Notation do
     else
       {:error, "unauthorized"}
     end
+  end
+  ```
+
+  Alternatively can provide a list of topics:
+
+  ```elixir
+  config fn _, _ ->
+    {:ok, topic: ["topic_one", "topic_two", "topic_three"]}
   end
   ```
 
