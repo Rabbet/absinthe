@@ -139,18 +139,29 @@ defmodule Absinthe.Middleware.Batch do
   end
 
   defp do_batching(input) do
+    pid = self()
+
     input
     |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
     |> Enum.map(fn {{batch_fun, batch_opts}, batch_data} ->
       {batch_opts,
        Task.async(fn ->
-         {batch_fun, call_batch_fun(batch_fun, batch_data)}
+         {batch_fun, call_batch_fun(pid, batch_fun, batch_data)}
        end)}
     end)
     |> Map.new(fn {batch_opts, task} ->
       timeout = Keyword.get(batch_opts, :timeout, 5_000)
       Task.await(task, timeout)
     end)
+  end
+
+  defp call_batch_fun(pid, batch_fun, batch_data) do
+    Appsignal.Instrumentation.Helpers.instrument(
+      pid,
+      "Absinthe.Middleware.Batch",
+      "call_batch_fun",
+      fn -> call_batch_fun(batch_fun, batch_data) end
+    )
   end
 
   defp call_batch_fun({module, fun}, batch_data) do
