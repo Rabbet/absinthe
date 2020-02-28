@@ -155,21 +155,19 @@ defmodule Absinthe.Middleware.Batch do
     end)
   end
 
-  defp call_batch_fun(pid, batch_fun, batch_data) do
+  defp call_batch_fun(pid, {module, fun}, batch_data) do
+    call_batch_fun(pid, {module, fun, []}, batch_data)
+  end
+
+  defp call_batch_fun(pid, {module, fun, config}, batch_data) do
     Appsignal.Instrumentation.Helpers.instrument(
       pid,
       "Absinthe.Middleware.Batch",
-      "call_batch_fun",
-      fn -> call_batch_fun(batch_fun, batch_data) end
+      "#{module}::#{fun}",
+      "#{config}::#{batch_data}",
+      0,
+      fn-> apply(module, fun, [config, batch_data]) end
     )
-  end
-
-  defp call_batch_fun({module, fun}, batch_data) do
-    call_batch_fun({module, fun, []}, batch_data)
-  end
-
-  defp call_batch_fun({module, fun, config}, batch_data) do
-    apply(module, fun, [config, batch_data])
   end
 
   # If the flag is set we need to do another resolution phase.
