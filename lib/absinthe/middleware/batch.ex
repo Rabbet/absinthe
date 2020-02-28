@@ -164,9 +164,9 @@ defmodule Absinthe.Middleware.Batch do
       pid,
       "Absinthe.Middleware.Batch",
       "#{module}::#{fun}",
-      "#{IO.inspect(config)}::#{batch_data}",
+      "#{inspect(config)}::#{inspect(batch_data)}",
       0,
-      fn-> apply(module, fun, [config, batch_data]) end
+      fn -> apply(module, fun, [config, batch_data]) end
     )
   end
 
