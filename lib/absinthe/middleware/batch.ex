@@ -139,7 +139,7 @@ defmodule Absinthe.Middleware.Batch do
   end
 
   defp do_batching(input) do
-    pid = self()
+    pid = Appsignal.Tracer.current_span()
 
     input
     |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
@@ -160,14 +160,17 @@ defmodule Absinthe.Middleware.Batch do
   end
 
   defp call_batch_fun(pid, {module, fun, config}, batch_data) do
-    Appsignal.Instrumentation.Helpers.instrument(
-      pid,
-      "Absinthe.Middleware.Batch",
-      "#{module}::#{fun}",
-      "#{inspect(config)}::#{inspect(batch_data)}",
-      0,
-      fn -> apply(module, fun, [config, batch_data]) end
-    )
+    span =
+      "http_request"
+      |> Appsignal.Tracer.create_span(pid)
+      |> Appsignal.Span.set_name("Absinthe.Middleware.Batch")
+      |> Appsignal.Span.set_sample_data("batch_data", %{config: config, batch_data: batch_data})
+
+    res = apply(module, fun, [config, batch_data])
+
+    Appsignal.Tracer.close_span(span)
+
+    res
   end
 
   # If the flag is set we need to do another resolution phase.
